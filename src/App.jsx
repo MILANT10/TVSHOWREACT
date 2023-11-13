@@ -6,24 +6,34 @@ import { TVShowDetail } from "./components/TVShowDetail/TVShowDetail";
 import { Logo } from "./components/Logo/Logo";
 import logo from "./assets/images/logo.png";
 import { TVShowListItem } from "./components/TVShowListItem/TVShowListItem";
+import { TVShowList } from "./components/TVShowList/TVShowList";
+import { SearchBar } from "./components/SearchBar/SearchBar";
 
 export function App() {
   const [currentTVShow, setCurrentTVShow] = useState();
   const [recommendationList, setRecommendationList] = useState([]);
 
   async function fetchPopulars() {
-    const populars = await TVShowAPI.fetchPopulars();
-    if (populars.length > 0) {
-      setCurrentTVShow(populars[0]);
+    try {
+      const populars = await TVShowAPI.fetchPopulars();
+      if (populars.length > 0) {
+        setCurrentTVShow(populars[0]);
+      }
+    } catch (error) {
+      alert("Erreur dans la recherche des séries populaires");
     }
   }
 
   async function fetchRecommendations(tvShowId) {
-    const recommendations = await TVShowAPI.fetchRecommendations(
-      tvShowId
-    );
+    const recommendations = await TVShowAPI.fetchRecommendations(tvShowId);
     if (recommendations.length > 0) {
       setRecommendationList(recommendations.slice(0, 10));
+    }
+  }
+  async function searchTVShow(TvShowName) {
+    const searchResponse = await TVShowAPI.fetchByTitle(TvShowName);
+    if (searchResponse.length > 0) {
+      setCurrentTVShow(searchResponse[0]);
     }
   }
 
@@ -37,10 +47,6 @@ export function App() {
     }
   }, [currentTVShow]);
 
-  function setCurrentTvShowFromRecommendation(tvShow) {
-    alert(JSON.stringify(tvShow));
-  }
-
   return (
     <div
       className={s.main_container}
@@ -48,8 +54,7 @@ export function App() {
         background: currentTVShow
           ? `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url("${BACKDROP_BASE_URL}${currentTVShow.backdrop_path}") no-repeat center / cover`
           : "black",
-      }}
-    >
+      }}>
       <div className={s.header}>
         <div className="row">
           <div className="col-4">
@@ -60,7 +65,7 @@ export function App() {
             />
           </div>
           <div className="col-md-12 col-lg-4">
-            <input style={{ width: "100%" }} type="text" />
+            <SearchBar onSubmit={searchTVShow} />
           </div>
         </div>
       </div>
@@ -68,21 +73,11 @@ export function App() {
         {currentTVShow && <TVShowDetail tvShow={currentTVShow} />}
       </div>
       <div className={s.recommended_shows}>
-        {currentTVShow && (
-          <>
-            <TVShowListItem
-              onClick={setCurrentTvShowFromRecommendation}
-              tvShow={currentTVShow}
-            />
-            <TVShowListItem
-              onClick={setCurrentTvShowFromRecommendation}
-              tvShow={currentTVShow}
-            />
-            <TVShowListItem
-              onClick={setCurrentTvShowFromRecommendation}
-              tvShow={currentTVShow}
-            />
-          </>
+        {recommendationList && recommendationList.length > 0 && (
+          <TVShowList
+            onClickItem={setCurrentTVShow}
+            tvShowList={recommendationList}
+          />
         )}
       </div>
     </div>
